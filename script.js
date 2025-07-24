@@ -1,66 +1,81 @@
-// Replace this with your backend WebSocket URL (use wss:// if HTTPS)
-const ws = new WebSocket('wss://tiktok-overlay-backend.onrender.com');
+// script.js
 
-ws.onopen = () => {
+// Replace this with your Render backend websocket URL
+const WEBSOCKET_URL = 'wss://tiktok-overlay-backend.onrender.com';
+
+// Connect to the backend WebSocket
+const socket = new WebSocket(WEBSOCKET_URL);
+
+// Get reference to chat container in your HTML
+const chatContainer = document.getElementById('chat');
+
+// Maximum messages to display at once
+const MAX_MESSAGES = 5;
+
+// Duration each message stays visible (ms)
+const MESSAGE_DURATION = 8000;
+
+socket.addEventListener('open', () => {
   console.log('Connected to backend websocket');
-};
+});
 
-ws.onmessage = (event) => {
-  const message = JSON.parse(event.data);
+socket.addEventListener('message', (event) => {
+  try {
+    const data = JSON.parse(event.data);
 
-  if (message.type === 'chat') {
-    const { username, comment } = message.data;
-    showChatMessage(username, comment);
-  } else if (message.type === 'gift') {
-    const { username, giftName } = message.data;
-    showGiftMessage(username, giftName);
+    if (data.type === 'chat') {
+      showChatMessage(data.username, data.message);
+    }
+
+    // You can add other data.type handlers here (e.g. gifts, reactions)
+  } catch (e) {
+    console.error('Failed to parse message:', e);
   }
-};
+});
 
-ws.onerror = (err) => {
-  console.error('WebSocket error:', err);
-};
+function showChatMessage(username, message) {
+  // Create message wrapper div
+  const messageEl = document.createElement('div');
+  messageEl.classList.add('chat-message');
+  
+  // Modern styling: username bold + message, with some spacing
+  messageEl.innerHTML = `<span class="chat-username">${sanitize(username)}:</span> <span class="chat-text">${parseEmojis(sanitize(message))}</span>`;
 
-function showChatMessage(username, comment) {
-  const chatBox = document.getElementById('chat');
-  const el = document.createElement('div');
-  el.className = 'chat-message';
-  el.innerHTML = `<strong>${escapeHtml(username)}:</strong> ${parseEmojis(escapeHtml(comment))}`;
-  chatBox.prepend(el);
-  animateAndRemove(el);
-}
+  // Append to chat container
+  chatContainer.appendChild(messageEl);
 
-function showGiftMessage(username, giftName) {
-  const chatBox = document.getElementById('chat');
-  const el = document.createElement('div');
-  el.className = 'gift-message';
-  el.innerHTML = `🎁 <strong>${escapeHtml(username)}</strong> sent a <em>${escapeHtml(giftName)}</em>`;
-  chatBox.prepend(el);
-  animateAndRemove(el);
-}
-
-function animateAndRemove(element) {
-  // Trigger showing animation
+  // Animate in (fade + slide up)
   requestAnimationFrame(() => {
-    element.classList.add('show');
+    messageEl.classList.add('visible');
   });
 
-  // Remove after 8 seconds with fade out
+  // Remove oldest messages if exceeding max
+  while (chatContainer.children.length > MAX_MESSAGES) {
+    chatContainer.removeChild(chatContainer.firstChild);
+  }
+
+  // Remove message after duration with fade out
   setTimeout(() => {
-    element.classList.remove('show');
-    setTimeout(() => {
-      element.remove();
-    }, 500);
-  }, 8000);
+    messageEl.classList.remove('visible');
+    messageEl.addEventListener('transitionend', () => {
+      messageEl.remove();
+    });
+  }, MESSAGE_DURATION);
 }
 
-// Basic emoji parser (expand as needed or use an emoji library)
+// Basic sanitize to avoid HTML injection
+function sanitize(str) {
+  return str.replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+}
+
+// Simple emoji parser: converts :) and :D to emoji chars as example
 function parseEmojis(text) {
   return text
     .replace(/:\)/g, '😊')
-    .replace(/:\(/g, '☹️')
-    .replace(/:heart:/g, '❤️')
-    .replace(/:rose:/g, '🌹');
+    .replace(/:D/g, '😄')
+    .replace(/:\(/g, '😞')
+    // Add more emoji shortcuts here
+    ;
 }
-
-// Simple escape to pr
