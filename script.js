@@ -1,76 +1,66 @@
-// IMPORTANT: use your Render backend WS URL
-const socket = new WebSocket("wss://tiktok-overlay-backend.onrender.com");
+// Replace this with your backend WebSocket URL (use wss:// if HTTPS)
+const ws = new WebSocket('wss://tiktok-overlay-backend.onrender.com');
 
-socket.onopen = () => {
-  console.log("Connected to backend WebSocket");
+ws.onopen = () => {
+  console.log('Connected to backend websocket');
 };
 
-socket.onerror = (err) => {
-  console.error("WebSocket error:", err);
+ws.onmessage = (event) => {
+  const message = JSON.parse(event.data);
+
+  if (message.type === 'chat') {
+    const { username, comment } = message.data;
+    showChatMessage(username, comment);
+  } else if (message.type === 'gift') {
+    const { username, giftName } = message.data;
+    showGiftMessage(username, giftName);
+  }
 };
 
-socket.onclose = () => {
-  console.warn("WebSocket closed");
+ws.onerror = (err) => {
+  console.error('WebSocket error:', err);
 };
 
-function disappear(el, ms = 8000) {
-  setTimeout(() => {
-    el.style.animation = "fadeOutUp 0.7s forwards";
-    el.addEventListener("animationend", () => el.remove());
-  }, ms);
+function showChatMessage(username, comment) {
+  const chatBox = document.getElementById('chat');
+  const el = document.createElement('div');
+  el.className = 'chat-message';
+  el.innerHTML = `<strong>${escapeHtml(username)}:</strong> ${parseEmojis(escapeHtml(comment))}`;
+  chatBox.prepend(el);
+  animateAndRemove(el);
 }
 
-function renderBadges(badges = []) {
-  const wrap = document.createElement("span");
-  wrap.className = "badges";
-  badges.forEach(b => {
-    const span = document.createElement("span");
-    span.className = `badge badge-${b}`;
-    span.title = b;
-    wrap.appendChild(span);
+function showGiftMessage(username, giftName) {
+  const chatBox = document.getElementById('chat');
+  const el = document.createElement('div');
+  el.className = 'gift-message';
+  el.innerHTML = `🎁 <strong>${escapeHtml(username)}</strong> sent a <em>${escapeHtml(giftName)}</em>`;
+  chatBox.prepend(el);
+  animateAndRemove(el);
+}
+
+function animateAndRemove(element) {
+  // Trigger showing animation
+  requestAnimationFrame(() => {
+    element.classList.add('show');
   });
-  return wrap;
+
+  // Remove after 8 seconds with fade out
+  setTimeout(() => {
+    element.classList.remove('show');
+    setTimeout(() => {
+      element.remove();
+    }, 500);
+  }, 8000);
 }
 
-socket.onmessage = (event) => {
-  let data;
-  try {
-    data = JSON.parse(event.data);
-  } catch (e) {
-    console.error("Invalid JSON:", event.data);
-    return;
-  }
+// Basic emoji parser (expand as needed or use an emoji library)
+function parseEmojis(text) {
+  return text
+    .replace(/:\)/g, '😊')
+    .replace(/:\(/g, '☹️')
+    .replace(/:heart:/g, '❤️')
+    .replace(/:rose:/g, '🌹');
+}
 
-  const container = document.getElementById("chat-container");
-  if (!container) return;
-
-  if (data.type === "chat") {
-    const msg = document.createElement("div");
-    msg.className = "chat-message";
-
-    const badgesEl = renderBadges(data.badges || []);
-
-    const user = document.createElement("span");
-    user.className = "username";
-    user.textContent = data.user || data.nickname || "Unknown";
-
-    const comment = document.createElement("span");
-    comment.className = "comment";
-    comment.textContent = ` ${data.comment}`;
-
-    msg.appendChild(badgesEl);
-    msg.appendChild(user);
-    msg.appendChild(comment);
-
-    container.appendChild(msg);
-    disappear(msg, 9000);
-  }
-
-  if (data.type === "gift") {
-    const gift = document.createElement("div");
-    gift.className = "gift-message";
-    gift.textContent = `${data.user || data.nickname} sent ${data.repeatCount || data.giftCount || 1} × ${data.gift || data.giftName}`;
-    container.appendChild(gift);
-    disappear(gift, 10000);
-  }
-};
+// Simple escape to pr
