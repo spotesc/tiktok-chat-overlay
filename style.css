@@ -1,0 +1,105 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #0e0e10;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #fff;
+  overflow: hidden;
+}
+
+#chat-container {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 350px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  z-index: 9999;
+}
+
+/* Chat bubble style */
+.chat-message, .gift-message {
+  position: relative;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 10px 14px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  animation: slideIn 0.4s ease-out forwards;
+}
+
+/* Username */
+.username {
+  font-weight: 600;
+  color: #facc15;
+  margin-right: 6px;
+}
+
+/* Comment */
+.comment {
+  color: #e5e7eb;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+/* Badges */
+.badges {
+  margin-right: 8px;
+  display: inline-block;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 16px;
+  margin-right: 4px;
+  vertical-align: middle;
+  opacity: 0.9;
+}
+
+.badge-mod::before {
+  content: "🛡️";
+}
+
+.badge-follower::before {
+  content: "⭐";
+}
+
+.badge-subscriber::before {
+  content: "💎";
+}
+
+/* Gift Style */
+.gift-message {
+  border: 1px solid #f472b6;
+  background: rgba(253, 164, 175, 0.1);
+  color: #f9a8d4;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Slide In + Fade */
+@keyframes slideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOutUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
