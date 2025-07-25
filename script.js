@@ -1,45 +1,29 @@
-const chatContainer = document.getElementById('chat-container');
+const socket = new WebSocket("wss://tiktok-overlay-backend.onrender.com");
 
-// Connect to your backend WebSocket (adjust URL if needed)
-const socket = new WebSocket('wss:/https://tiktok-overlay-backend.onrender.com');
+const messagesContainer = document.getElementById("messages");
 
-socket.addEventListener('open', () => {
-  console.log('Connected to backend WebSocket');
-});
+socket.addEventListener("message", (event) => {
+  const data = JSON.parse(event.data);
+  let messageText = "";
 
-socket.addEventListener('message', (event) => {
-  try {
-    const data = JSON.parse(event.data);
-
-    if (data.type === 'chat') {
-      addChatMessage(data.username, data.message);
-    }
-  } catch (e) {
-    console.error('Invalid message', e);
+  if (data.type === "chat") {
+    messageText = `${data.username}: ${data.comment}`;
+  } else if (data.type === "gift") {
+    messageText = `${data.username} sent ${data.giftAmount}x ${data.giftName}`;
+  } else {
+    return; // ignore unknown types
   }
-});
 
-function addChatMessage(username, message) {
-  const messageEl = document.createElement('div');
-  messageEl.classList.add('chat-message');
+  const li = document.createElement("li");
+  li.textContent = messageText;
 
-  const userEl = document.createElement('span');
-  userEl.classList.add('username');
-  userEl.textContent = username + ':';
+  messagesContainer.appendChild(li);
 
-  const textEl = document.createElement('span');
-  textEl.classList.add('message');
-  textEl.textContent = message;
+  // Auto-scroll
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-  messageEl.appendChild(userEl);
-  messageEl.appendChild(textEl);
-  chatContainer.prepend(messageEl);
-
-  // Remove message after 10 seconds with fade-out animation
+  // Remove message after 15 seconds
   setTimeout(() => {
-    messageEl.classList.add('hide');
-    setTimeout(() => {
-      chatContainer.removeChild(messageEl);
-    }, 500);
-  }, 10000);
-}
+    li.remove();
+  }, 15000);
+});
