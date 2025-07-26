@@ -1,70 +1,27 @@
-body {
-  margin: 0;
-  background: transparent;
-  overflow: hidden;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+const socket = new WebSocket('ws://localhost:10000'); // Replace with deployed backend WebSocket URL
 
-#overlay {
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  max-width: 400px;
-  z-index: 1000;
-}
+socket.addEventListener('message', function (event) {
+  const data = JSON.parse(event.data);
+  const overlay = document.getElementById('overlay');
 
-.chat-message, .gift-message {
-  display: flex;
-  align-items: center;
-  background: rgba(30, 30, 30, 0.85);
-  border-radius: 12px;
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  color: #fff;
-  font-size: 18px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  animation: slideIn 0.5s ease forwards;
-  opacity: 1;
-  transition: opacity 1s ease;
-}
+  if (data.type === 'chat') {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message';
 
-.chat-message.fade-out, .gift-message.fade-out {
-  opacity: 0;
-}
+    const profileImg = document.createElement('img');
+    profileImg.src = data.profilePicture || 'https://placehold.co/32x32';
+    profileImg.alt = 'User';
 
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  margin-right: 10px;
-  object-fit: cover;
-  border: 2px solid #00f6ff;
-}
+    const textSpan = document.createElement('span');
+    textSpan.innerText = `${data.username || 'User'}: ${data.message || ''}`;
 
-.message-body {
-  flex: 1;
-  display: flex;
-  flex-wrap: wrap;
-}
+    messageDiv.appendChild(profileImg);
+    messageDiv.appendChild(textSpan);
 
-.user-name {
-  font-weight: 700;
-  color: #00f6ff;
-  margin-right: 6px;
-}
+    overlay.appendChild(messageDiv);
 
-.comment {
-  color: #eee;
-}
-
-/* Slide in from left */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
+    setTimeout(() => {
+      messageDiv.remove();
+    }, 10000);
   }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+});
