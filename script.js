@@ -1,29 +1,36 @@
-const socket = new WebSocket("wss://tiktok-overlay-backend.onrender.com");
+const overlay = document.getElementById('overlay');
 
-const messagesContainer = document.getElementById("messages");
+// ✅ Update to use your live backend WebSocket
+const socket = new WebSocket('wss://tiktok-overlay-backend.onrender.com');
 
-socket.addEventListener("message", (event) => {
+socket.addEventListener('open', () => {
+  console.log('Connected to TikTok overlay backend');
+});
+
+socket.addEventListener('message', (event) => {
   const data = JSON.parse(event.data);
-  let messageText = "";
 
-  if (data.type === "chat") {
-    messageText = `${data.username}: ${data.comment}`;
-  } else if (data.type === "gift") {
-    messageText = `${data.username} sent ${data.giftAmount}x ${data.giftName}`;
-  } else {
-    return; // ignore unknown types
+  if (data.type === 'chat') {
+    const el = document.createElement('div');
+    el.classList.add('message');
+    el.textContent = `${data.uniqueId}: ${data.comment}`;
+    overlay.appendChild(el);
+    setTimeout(() => overlay.removeChild(el), 10000);
   }
 
-  const li = document.createElement("li");
-  li.textContent = messageText;
+  if (data.type === 'gift') {
+    const el = document.createElement('div');
+    el.classList.add('message');
+    el.textContent = `${data.uniqueId} sent a ${data.giftName} x${data.repeatCount}`;
+    overlay.appendChild(el);
+    setTimeout(() => overlay.removeChild(el), 12000);
+  }
+});
 
-  messagesContainer.appendChild(li);
+socket.addEventListener('close', () => {
+  console.warn('WebSocket closed');
+});
 
-  // Auto-scroll
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-  // Remove message after 15 seconds
-  setTimeout(() => {
-    li.remove();
-  }, 15000);
+socket.addEventListener('error', (err) => {
+  console.error('WebSocket error:', err);
 });
